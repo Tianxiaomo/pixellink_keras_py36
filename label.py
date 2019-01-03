@@ -96,22 +96,32 @@ def shrink_edge(xy_list, new_xy_list, edge, r, theta, ratio=cfg.shrink_ratio):
         long_end_sign_y * ratio * r[end_point] * np.sin(theta[start_point])
 
 
-def process_label(data_dir=cfg.data_dir):
+data_dir1 = './data'
+image_dir = 'image'
+text_dir = 'text'
+tr_image_dir = 'train_image'
+tr_label_dir = 'train_label'
+show_gt_image_dir_name = 'show_gt_image'
+show_act_image_dir_name = 'show_act_image'
+val_fname = 'val_1T640.txt'
+train_fname = 'train_1T640.txt'
+
+def process_label(data_dir=data_dir1):
     print(cfg.train_task_id)
-    with open(os.path.join(data_dir, cfg.val_fname), 'r') as f_val:
+    with open(os.path.join(data_dir, val_fname), 'r') as f_val:
         f_list = f_val.readlines()
-    with open(os.path.join(data_dir, cfg.train_fname), 'r') as f_train:
+    with open(os.path.join(data_dir, train_fname), 'r') as f_train:
         f_list.extend(f_train.readlines())
     for line in tqdm(f_list):
         line_cols = str(line).strip().split(',')
         img_name, width, height = \
             line_cols[0].strip(), int(line_cols[1].strip()), \
             int(line_cols[2].strip())
-        gt = np.zeros((height // cfg.pixel_size, width // cfg.pixel_size, 7))
-        train_label_dir = os.path.join(data_dir, cfg.train_label_dir_name)
+        gt = np.zeros((height // cfg.img_scall, width // cfg.img_scall, 2))
+        train_label_dir = os.path.join(data_dir, tr_label_dir)
         xy_list_array = np.load(os.path.join(train_label_dir,
                                              img_name[:-4] + '.npy'))
-        train_image_dir = os.path.join(data_dir, cfg.train_image_dir_name)
+        train_image_dir = os.path.join(data_dir, tr_image_dir)
         with Image.open(os.path.join(train_image_dir, img_name)) as im:
             draw = ImageDraw.Draw(im)
             for xy_list in xy_list_array:
@@ -120,17 +130,17 @@ def process_label(data_dir=cfg.data_dir):
                 p_min = np.amin(shrink_xy_list, axis=0)
                 p_max = np.amax(shrink_xy_list, axis=0)
                 # floor of the float
-                ji_min = (p_min / cfg.pixel_size - 0.5).astype(int) - 1
+                ji_min = (p_min / cfg.img_scall - 0.5).astype(int) - 1
                 # +1 for ceil of the float and +1 for include the end
-                ji_max = (p_max / cfg.pixel_size - 0.5).astype(int) + 3
+                ji_max = (p_max / cfg.img_scall - 0.5).astype(int) + 3
                 imin = np.maximum(0, ji_min[1])
-                imax = np.minimum(height // cfg.pixel_size, ji_max[1])
+                imax = np.minimum(height // cfg.img_scall, ji_max[1])
                 jmin = np.maximum(0, ji_min[0])
-                jmax = np.minimum(width // cfg.pixel_size, ji_max[0])
+                jmax = np.minimum(width // cfg.img_scall, ji_max[0])
                 for i in range(imin, imax):
                     for j in range(jmin, jmax):
-                        px = (j + 0.5) * cfg.pixel_size
-                        py = (i + 0.5) * cfg.pixel_size
+                        px = (j + 0.5) * cfg.img_scall
+                        py = (i + 0.5) * cfg.img_scall
                         if point_inside_of_quad(px, py,
                                                 shrink_xy_list, p_min, p_max):
                             gt[i, j, 0] = 1
@@ -162,11 +172,11 @@ def process_label(data_dir=cfg.data_dir):
                                        (px - 0.5 * cfg.pixel_size,
                                         py - 0.5 * cfg.pixel_size)],
                                       width=line_width, fill=line_color)
-            act_image_dir = os.path.join(cfg.data_dir,
-                                         cfg.show_act_image_dir_name)
+            act_image_dir = os.path.join(data_dir,
+                                         show_act_image_dir_name)
             if cfg.draw_act_quad:
                 im.save(os.path.join(act_image_dir, img_name))
-        train_label_dir = os.path.join(data_dir, cfg.train_label_dir_name)
+        train_label_dir = os.path.join(data_dir, tr_label_dir)
         np.save(os.path.join(train_label_dir,
                              img_name[:-4] + '_gt.npy'), gt)
 

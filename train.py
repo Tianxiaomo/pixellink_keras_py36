@@ -10,7 +10,7 @@ import tensorflow as tf
 import keras.backend as K
 
 # num_cores = 1
-# GPU = 2
+# GPU = 0
 # CPU = 1
 # if GPU:
 #     num_GPU = 1
@@ -75,7 +75,7 @@ def iou_loss_core(y_true, y_pred, smooth=1):
 
 pixellink = PixelLink()
 pl_network = pixellink.build_network()
-pl_network.summary()
+# pl_network.summary()
 pl_network.compile(loss=loss, optimizer=Adam(lr=cfg.lr,
                                                     # clipvalue=cfg.clipvalue,
                                                     decay=cfg.decay),

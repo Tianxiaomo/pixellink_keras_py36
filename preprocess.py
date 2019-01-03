@@ -83,23 +83,29 @@ def resize_image(im, max_img_size=cfg.max_train_img_size):
     d_height = o_height - (o_height % 32)
     return d_wight, d_height
 
+data_dir1 = './data'
+image_dir = 'image'
+text_dir = 'text'
+tr_image_dir = 'train_image'
+tr_label_dir = 'train_label'
+show_gt_image_dir_name = 'show_gt_image'
+show_act_image_dir_name = 'show_act_image'
 
 def preprocess():
-    print(cfg.train_task_id)
-    data_dir = cfg.data_dir
-    origin_image_dir = os.path.join(data_dir, cfg.origin_image_dir_name)
-    origin_txt_dir = os.path.join(data_dir, cfg.origin_txt_dir_name)
-    train_image_dir = os.path.join(data_dir, cfg.train_image_dir_name)
-    train_label_dir = os.path.join(data_dir, cfg.train_label_dir_name)
+    data_dir = data_dir1
+    origin_image_dir = os.path.join(data_dir, image_dir)
+    origin_txt_dir = os.path.join(data_dir, text_dir)
+    train_image_dir = os.path.join(data_dir, tr_image_dir)
+    train_label_dir = os.path.join(data_dir, tr_label_dir)
     if not os.path.exists(train_image_dir):
         os.mkdir(train_image_dir)
     if not os.path.exists(train_label_dir):
         os.mkdir(train_label_dir)
     draw_gt_quad = cfg.draw_gt_quad
-    show_gt_image_dir = os.path.join(data_dir, cfg.show_gt_image_dir_name)
+    show_gt_image_dir = os.path.join(data_dir, show_gt_image_dir_name)
     if not os.path.exists(show_gt_image_dir):
         os.mkdir(show_gt_image_dir)
-    show_act_image_dir = os.path.join(cfg.data_dir, cfg.show_act_image_dir_name)
+    show_act_image_dir = os.path.join(data_dir, show_act_image_dir_name)
     if not os.path.exists(show_act_image_dir):
         os.mkdir(show_act_image_dir)
 
@@ -109,23 +115,23 @@ def preprocess():
     for o_img_fname in tqdm(o_img_list):
         with Image.open(os.path.join(origin_image_dir, o_img_fname)) as im:
             # d_wight, d_height = resize_image(im)
-            d_wight, d_height = cfg.max_train_img_size, cfg.max_train_img_size
-            scale_ratio_w = d_wight / im.width
-            scale_ratio_h = d_height / im.height
-            im = im.resize((d_wight, d_height), Image.NEAREST).convert('RGB')
+            # d_wight, d_height = cfg.max_train_img_size, cfg.max_train_img_size
+            # scale_ratio_w = d_wight / im.width
+            # scale_ratio_h = d_height / im.height
+            # im = im.resize((d_wight, d_height), Image.NEAREST).convert('RGB')
             show_gt_im = im.copy()
             # draw on the img
             draw = ImageDraw.Draw(show_gt_im)
             with open(os.path.join(origin_txt_dir,
-                                   o_img_fname[:-4] + '.txt'), 'r',encoding='utf-8') as f:
+                                   'gt_' + o_img_fname[:-4] + '.txt'), 'r',encoding='utf-8') as f:
                 anno_list = f.readlines()
             xy_list_array = np.zeros((len(anno_list), 4, 2))
             for anno, i in zip(anno_list, range(len(anno_list))):
-                anno_colums = anno.strip().split(',')
+                anno_colums = anno.strip('\ufeff').split(',')
                 anno_array = np.array(anno_colums)
                 xy_list = np.reshape(anno_array[:8].astype(float), (4, 2))
-                xy_list[:, 0] = xy_list[:, 0] * scale_ratio_w
-                xy_list[:, 1] = xy_list[:, 1] * scale_ratio_h
+                xy_list[:, 0] = xy_list[:, 0]
+                xy_list[:, 1] = xy_list[:, 1]
                 xy_list = reorder_vertexes(xy_list)
                 xy_list_array[i] = xy_list
                 _, shrink_xy_list, _ = shrink(xy_list, cfg.shrink_ratio)
@@ -161,8 +167,8 @@ def preprocess():
             if draw_gt_quad:
                 show_gt_im.save(os.path.join(show_gt_image_dir, o_img_fname))
             train_val_set.append('{},{},{}\n'.format(o_img_fname,
-                                                     d_wight,
-                                                     d_height))
+                                                     im.width,
+                                                     im.height))
 
     train_img_list = os.listdir(train_image_dir)
     print('found %d train images.' % len(train_img_list))

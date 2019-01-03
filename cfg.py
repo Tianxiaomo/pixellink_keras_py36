@@ -31,14 +31,14 @@ max_train_img_size = int(train_task_id[-3:])
 max_predict_img_size = int(train_task_id[-3:])  # 2400
 assert max_train_img_size in [256, 384, 512, 640, 736], \
     'max_train_img_size must in [256, 384, 512, 640, 736]'
-if max_train_img_size == 256:
-    batch_size = 8
-elif max_train_img_size == 384:
-    batch_size = 4
-elif max_train_img_size == 512:
-    batch_size = 2
-else:
-    batch_size = 1
+# if max_train_img_size == 256:
+#     batch_size = 8
+# elif max_train_img_size == 384:
+#     batch_size = 4
+# elif max_train_img_size == 512:
+#     batch_size = 2
+# else:
+batch_size = 1
 steps_per_epoch = num_train_img// batch_size
 validation_steps = num_val_img // batch_size
 

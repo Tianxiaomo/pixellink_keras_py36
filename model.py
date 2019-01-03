@@ -30,7 +30,7 @@ class PixelLink:
                                shape=(720,1280, cfg.num_channels),
                                dtype='float32')
         vgg16 = VGG16(input_tensor=self.input_img,
-                      weights='imagenet',
+                      # weights='imagenet',
                       include_top=False)
         if cfg.locked_layers:
             # locked first two conv layers
